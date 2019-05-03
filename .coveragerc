@@ -1,0 +1,14 @@
+[run]
+data_file = reports/.coverage
+source = chem
+branch = true
+
+[report]
+ignore_errors = True
+
+[html]
+title = Chem Python Test Coverage Report
+directory = reports/cover
+
+[xml]
+output = reports/coverage.xml
