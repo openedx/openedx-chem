@@ -15,6 +15,13 @@ matrix:
       env: TOXENV=pycodestyle
     - python: 2.7
       env: TOXENV=pylint
+  allow_failures:
+    - python: 3.6
+      env: TOXENV=py3
+    - python: 3.6
+      env: TOXENV=pycodestyle
+    - python: 3.6
+      env: TOXENV=pylint
 addons:
     apt:
         packages:
