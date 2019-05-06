@@ -704,17 +704,3 @@ class TestGrade(unittest.TestCase):
             u'"e1": "H","e2": "(ep)","e3": "H"}}'
         )
         self.assertFalse(vsepr_grade(user_answer, correct_answer))
-
-
-def suite():
-    testcases = [
-        TestCompareExpressions,
-        TestCrystallographyMiller,
-        TestDivideExpressions,
-        TestGrade,
-        TestRenderEquations,
-    ]
-    suites = []
-    for testcase in testcases:
-        suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
-    return unittest.TestSuite(suites)
