@@ -2,7 +2,6 @@
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
 from __future__ import absolute_import, print_function
-import codecs
 import unittest
 from fractions import Fraction
 
@@ -719,10 +718,3 @@ def suite():
     for testcase in testcases:
         suites.append(unittest.TestLoader().loadTestsFromTestCase(testcase))
     return unittest.TestSuite(suites)
-
-
-if __name__ == "__main__":
-    LOCAL_DEBUG = True
-    with codecs.open('render.html', 'w', encoding='utf-8') as f:
-        unittest.TextTestRunner(verbosity=2).run(suite())
-    # open render.html to look at rendered equations
