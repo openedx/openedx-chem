@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="chem",
-    version='0.4.0',
+    version='1.0.0',
     packages=["chem"],
     install_requires=[
         'markupsafe',  # Should be replaced by other utilities. See LEARNER-5853 for more details.
