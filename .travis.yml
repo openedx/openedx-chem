@@ -1,0 +1,40 @@
+language: python
+sudo: false
+cache: pip
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=py3
+    - python: 3.6
+      env: TOXENV=pycodestyle
+    - python: 3.6
+      env: TOXENV=pylint
+    - python: 2.7
+      env: TOXENV=py27
+    - python: 2.7
+      env: TOXENV=pycodestyle
+    - python: 2.7
+      env: TOXENV=pylint
+  allow_failures:
+    - python: 3.6
+      env: TOXENV=py3
+    - python: 3.6
+      env: TOXENV=pycodestyle
+    - python: 3.6
+      env: TOXENV=pylint
+addons:
+    apt:
+        packages:
+            - libblas-dev
+            - liblapack-dev
+            - gfortran
+install:
+    - pip install tox
+    - pip install coveralls
+script:
+    - make test
+after_success:
+    - coveralls
+branches:
+    only:
+      - master
