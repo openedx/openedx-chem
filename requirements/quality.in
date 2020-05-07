@@ -1,0 +1,7 @@
+# Requirements for code quality checks
+-c constraints.txt
+
+-r base.txt               # Core dependencies
+
+pycodestyle               # PEP 8 compliance validation
+pylint
