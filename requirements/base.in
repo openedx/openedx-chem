@@ -1,0 +1,9 @@
+# Core requirements for using this package
+-c constraints.txt
+
+markupsafe  # Should be replaced by other utilities. See LEARNER-5853 for more details.
+nltk
+numpy
+pyparsing
+scipy
+six

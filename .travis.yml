@@ -1,27 +1,12 @@
 language: python
 sudo: false
 cache: pip
-matrix:
-  include:
-    - python: 3.6
-      env: TOXENV=py3
-    - python: 3.6
-      env: TOXENV=pycodestyle
-    - python: 3.6
-      env: TOXENV=pylint
-    - python: 2.7
-      env: TOXENV=py27
-    - python: 2.7
-      env: TOXENV=pycodestyle
-    - python: 2.7
-      env: TOXENV=pylint
-  allow_failures:
-    - python: 3.6
-      env: TOXENV=py3
-    - python: 3.6
-      env: TOXENV=pycodestyle
-    - python: 3.6
-      env: TOXENV=pylint
+python:
+  - 3.5
+  - 3.8
+env:
+  - TOXENV=django22
+  - TOXENV=quality
 addons:
     apt:
         packages:
@@ -29,8 +14,7 @@ addons:
             - liblapack-dev
             - gfortran
 install:
-    - pip install tox
-    - pip install coveralls
+  - pip install -r requirements/travis.txt
 script:
     - make test
 after_success:
