@@ -26,7 +26,7 @@ def is_requirement(line):
 
 setup(
     name="chem",
-    version='1.0.0',
+    version='1.0.1',
     packages=["chem"],
     install_requires=load_requirements('requirements/base.in'),
     test_suite='chem.tests',
