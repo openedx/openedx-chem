@@ -30,9 +30,9 @@ def is_requirement(line):
 
 setup(
     name="chem",
-    description='openedx chem',
+    description='A helper library for chemistry calculations,used by the edx-platform',
     long_description=long_description,
-    version='1.1.0',
+    version='1.2.0',
     packages=["chem"],
     install_requires=load_requirements('requirements/base.in'),
     test_suite='chem.tests',
@@ -41,9 +41,10 @@ setup(
     author='edX',
     url='https://github.com/edx/openedx-chem',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Scientific/Engineering :: Chemistry',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
