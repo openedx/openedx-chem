@@ -2,26 +2,26 @@ language: python
 sudo: false
 cache: pip
 python:
-  - 3.5
-  - 3.8
+- 3.5
+- 3.8
 env:
-  - TOXENV=django22
-  - TOXENV=quality
+- TOXENV=django22
+- TOXENV=quality
 addons:
-    apt:
-        packages:
-            - libblas-dev
-            - liblapack-dev
-            - gfortran
+  apt:
+    packages:
+    - libblas-dev
+    - liblapack-dev
+    - gfortran
 install:
-  - pip install -r requirements/travis.txt
+- pip install -r requirements/travis.txt
 script:
-    - make test
+- make test
 after_success:
-    - coveralls
+- coveralls
 branches:
-    only:
-      - master
+  only:
+  - master
 deploy:
   provider: pypi
   user: edx
@@ -30,4 +30,4 @@ deploy:
     tags: true
     condition: "$TOXENV = quality"
   password:
-    secure:
+    secure: T+WWSIBGWIN9dGfTmmrXvSyGdgGzScbrMktyQzv9onJe1o5zfNp2oPkIhitmFoXWuqJaVQNvVV3myEbKpVCdXBMjY/ACxaTnFSw98WmHcNgvkpyW/3xalCILEDyN6HEvAGKTN7JLwGZ3qNvVwU5q7AiBMk8xBnuxwOk0GNtyCBEo3ZvY078wcsQ8K4x/XxKPa5+kBBO1y4fhcNIoQJTypz6dafV8yjjObpLNBeGgQ5Vj35p5ieyX+vYmiZ+XtIJepDtA2WN9VoHb4OYr9bDkIYy652q4W9RUG4hbNS/Z8JxCGYE/VA57Wss9Kv+sR9pLFKMjIDuSQ8VyVd1a4RX5t3VHSFFgp9Z+uL+cb7weib1fUdolv81S9VtxNXVYWXBq8kXkr2ftXe5F2BCghUnXiJ1Zas52kRoWsxSN0jhs0Q88RuNRzC5HI/aiSAJAWfgt0g7SxM/EgZ8HBID8bY83YODCXD9Dc7lpw4btLobVTE3NL2F0x1g8SA7uJlepP3B38BCZjvaiBwshnFoyyhs9a/btMcdabzd5pmNDpnshK/PhZPp6NY2a5dXdJ3yowA+TNEniIiGyF5edShkbjk36ej0bDFmpK7Ehm2DBLg4qDtPfd0wkOO6RABDgm/NnilN1Rg5iB6008eO3b/W1sLRJjx+QjIPHqvwsAwh9YHMBiWQ=
