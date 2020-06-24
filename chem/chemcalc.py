@@ -1,5 +1,5 @@
-from __future__ import absolute_import, division
 from fractions import Fraction
+from functools import reduce
 
 import markupsafe
 import nltk
@@ -8,8 +8,6 @@ from pyparsing import Literal, OneOrMore, ParseException, StringEnd
 from six.moves import map
 from six.moves import range
 from six.moves import zip
-from functools import reduce
-
 
 ARROWS = ('<->', '->')
 

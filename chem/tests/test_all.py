@@ -1,12 +1,11 @@
 # pylint: disable=invalid-name
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
-from __future__ import absolute_import, print_function
+
 import unittest
 from fractions import Fraction
 
 import chem.miller
-
 from chem.chemcalc import chemical_equations_equal
 from chem.chemcalc import compare_chemical_expression
 from chem.chemcalc import divide_chemical_expression
