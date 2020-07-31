@@ -5,9 +5,7 @@ import markupsafe
 import nltk
 from nltk.tree import Tree
 from pyparsing import Literal, OneOrMore, ParseException, StringEnd
-from six.moves import map
-from six.moves import range
-from six.moves import zip
+from six.moves import map, range, zip
 
 ARROWS = ('<->', '->')
 

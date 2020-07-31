@@ -6,13 +6,11 @@ import unittest
 from fractions import Fraction
 
 import chem.miller
-from chem.chemcalc import chemical_equations_equal
-from chem.chemcalc import compare_chemical_expression
-from chem.chemcalc import divide_chemical_expression
-from chem.chemcalc import render_to_html
-from chem.chemtools import vsepr_build_correct_answer
-from chem.chemtools import vsepr_grade
-from chem.chemtools import vsepr_parse_user_answer
+from chem.chemcalc import (chemical_equations_equal,
+                           compare_chemical_expression,
+                           divide_chemical_expression, render_to_html)
+from chem.chemtools import (vsepr_build_correct_answer, vsepr_grade,
+                            vsepr_parse_user_answer)
 
 
 class TestCompareEquations(unittest.TestCase):
