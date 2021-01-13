@@ -1,4 +1,3 @@
-
 from setuptools import setup
 
 with open('README.rst') as a:
@@ -47,7 +46,6 @@ setup(
         'Topic :: Scientific/Engineering :: Chemistry',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.8',
     ],
 )

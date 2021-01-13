@@ -4,26 +4,23 @@
 #
 #    pip-compile --output-file=requirements/travis.txt requirements/travis.in
 #
-appdirs==1.4.3            # via -r requirements/tox.txt, virtualenv
+appdirs==1.4.4            # via -r requirements/tox.txt, virtualenv
 click==7.1.2              # via -r requirements/test.txt, nltk
-coverage==5.1             # via -r requirements/test.txt
-distlib==0.3.0            # via -r requirements/tox.txt, virtualenv
+coverage==5.3.1           # via -r requirements/test.txt
+distlib==0.3.1            # via -r requirements/tox.txt, virtualenv
 filelock==3.0.12          # via -r requirements/tox.txt, tox, virtualenv
-importlib-metadata==1.6.0  # via -r requirements/tox.txt, importlib-resources, pluggy, tox, virtualenv
-importlib-resources==1.5.0  # via -r requirements/tox.txt, virtualenv
-joblib==0.14.1            # via -r requirements/test.txt, nltk
+joblib==1.0.0             # via -r requirements/test.txt, nltk
 markupsafe==1.1.1         # via -r requirements/test.txt
 nltk==3.5                 # via -r requirements/test.txt
-numpy==1.18.4             # via -r requirements/test.txt, scipy
-packaging==20.3           # via -r requirements/tox.txt, tox
+numpy==1.19.5             # via -r requirements/test.txt, scipy
+packaging==20.8           # via -r requirements/tox.txt, tox
 pluggy==0.13.1            # via -r requirements/tox.txt, tox
-py==1.8.1                 # via -r requirements/tox.txt, tox
+py==1.10.0                # via -r requirements/tox.txt, tox
 pyparsing==2.4.7          # via -r requirements/test.txt, -r requirements/tox.txt, packaging
-regex==2020.4.4           # via -r requirements/test.txt, nltk
-scipy==1.4.1              # via -r requirements/test.txt
-six==1.14.0               # via -r requirements/tox.txt, packaging, tox, virtualenv
-toml==0.10.0              # via -r requirements/tox.txt, tox
-tox==3.15.0               # via -r requirements/tox.txt
-tqdm==4.46.0              # via -r requirements/test.txt, nltk
-virtualenv==20.0.20       # via -r requirements/tox.txt, tox
-zipp==1.2.0               # via -r requirements/tox.txt, importlib-metadata, importlib-resources
+regex==2020.11.13         # via -r requirements/test.txt, nltk
+scipy==1.6.0              # via -r requirements/test.txt
+six==1.15.0               # via -r requirements/test.txt, -r requirements/tox.txt, tox, virtualenv
+toml==0.10.2              # via -r requirements/tox.txt, tox
+tox==3.21.1               # via -r requirements/tox.txt
+tqdm==4.56.0              # via -r requirements/test.txt, nltk
+virtualenv==20.3.1        # via -r requirements/tox.txt, tox
