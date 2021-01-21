@@ -8,7 +8,6 @@ import math
 from functools import reduce
 
 import numpy as np
-from six.moves import map, range
 
 
 def lcm(a, b):
