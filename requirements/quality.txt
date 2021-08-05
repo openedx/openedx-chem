@@ -4,13 +4,13 @@
 #
 #    pip-compile --output-file=requirements/quality.txt requirements/quality.in
 #
-astroid==2.5.6
+astroid==2.6.6
     # via pylint
-click==8.0.0
+click==8.0.1
     # via
     #   -r requirements/base.txt
     #   nltk
-isort==5.8.0
+isort==5.9.3
     # via pylint
 joblib==1.0.1
     # via
@@ -18,35 +18,38 @@ joblib==1.0.1
     #   nltk
 lazy-object-proxy==1.6.0
     # via astroid
-markupsafe==2.0.0
+markupsafe==2.0.1
     # via -r requirements/base.txt
 mccabe==0.6.1
     # via pylint
 nltk==3.6.2
     # via -r requirements/base.txt
-numpy==1.20.3
+numpy==1.21.1
     # via
     #   -r requirements/base.txt
     #   scipy
 pycodestyle==2.7.0
     # via -r requirements/quality.in
-pylint==2.8.2
+pylint==2.9.6
     # via -r requirements/quality.in
 pyparsing==2.4.7
     # via -r requirements/base.txt
-regex==2021.4.4
+regex==2021.8.3
     # via
     #   -r requirements/base.txt
     #   nltk
-scipy==1.6.3
+scipy==1.7.1
     # via -r requirements/base.txt
 six==1.16.0
     # via -r requirements/base.txt
 toml==0.10.2
     # via pylint
-tqdm==4.60.0
+tqdm==4.62.0
     # via
     #   -r requirements/base.txt
     #   nltk
 wrapt==1.12.1
     # via astroid
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
