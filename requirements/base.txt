@@ -4,25 +4,25 @@
 #
 #    pip-compile --output-file=requirements/base.txt requirements/base.in
 #
-click==8.0.0
+click==8.0.1
     # via nltk
 joblib==1.0.1
     # via nltk
-markupsafe==2.0.0
+markupsafe==2.0.1
     # via -r requirements/base.in
 nltk==3.6.2
     # via -r requirements/base.in
-numpy==1.20.3
+numpy==1.21.1
     # via
     #   -r requirements/base.in
     #   scipy
 pyparsing==2.4.7
     # via -r requirements/base.in
-regex==2021.4.4
+regex==2021.8.3
     # via nltk
-scipy==1.6.3
+scipy==1.7.1
     # via -r requirements/base.in
 six==1.16.0
     # via -r requirements/base.in
-tqdm==4.60.0
+tqdm==4.62.0
     # via nltk

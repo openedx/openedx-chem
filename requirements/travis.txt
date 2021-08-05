@@ -4,17 +4,17 @@
 #
 #    pip-compile --output-file=requirements/travis.txt requirements/travis.in
 #
-appdirs==1.4.4
+backports.entry-points-selectable==1.1.0
     # via
     #   -r requirements/tox.txt
     #   virtualenv
-click==8.0.0
+click==8.0.1
     # via
     #   -r requirements/test.txt
     #   nltk
 coverage==5.5
     # via -r requirements/test.txt
-distlib==0.3.1
+distlib==0.3.2
     # via
     #   -r requirements/tox.txt
     #   virtualenv
@@ -27,18 +27,22 @@ joblib==1.0.1
     # via
     #   -r requirements/test.txt
     #   nltk
-markupsafe==2.0.0
+markupsafe==2.0.1
     # via -r requirements/test.txt
 nltk==3.6.2
     # via -r requirements/test.txt
-numpy==1.20.3
+numpy==1.21.1
     # via
     #   -r requirements/test.txt
     #   scipy
-packaging==20.9
+packaging==21.0
     # via
     #   -r requirements/tox.txt
     #   tox
+platformdirs==2.2.0
+    # via
+    #   -r requirements/tox.txt
+    #   virtualenv
 pluggy==0.13.1
     # via
     #   -r requirements/tox.txt
@@ -52,11 +56,11 @@ pyparsing==2.4.7
     #   -r requirements/test.txt
     #   -r requirements/tox.txt
     #   packaging
-regex==2021.4.4
+regex==2021.8.3
     # via
     #   -r requirements/test.txt
     #   nltk
-scipy==1.6.3
+scipy==1.7.1
     # via -r requirements/test.txt
 six==1.16.0
     # via
@@ -68,13 +72,13 @@ toml==0.10.2
     # via
     #   -r requirements/tox.txt
     #   tox
-tox==3.23.1
+tox==3.24.1
     # via -r requirements/tox.txt
-tqdm==4.60.0
+tqdm==4.62.0
     # via
     #   -r requirements/test.txt
     #   nltk
-virtualenv==20.4.6
+virtualenv==20.7.0
     # via
     #   -r requirements/tox.txt
     #   tox
