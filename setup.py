@@ -1,3 +1,6 @@
+import os
+import re
+
 from setuptools import setup
 
 with open('README.rst') as a:
@@ -27,11 +30,28 @@ def is_requirement(line):
     return line and not line.startswith(('-r', '#', '-e', 'git+', '-c'))
 
 
+def get_version(*file_paths):
+    """
+    Extract the version string from the file at the given relative path fragments.
+    """
+    filename = os.path.join(os.path.dirname(__file__), *file_paths)
+    with open(filename, encoding='utf-8') as opened_file:
+        version_file = opened_file.read()
+        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                                  version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError('Unable to find version string.')
+
+
+VERSION = get_version("chem", "__init__.py")
+
+
 setup(
     name="chem",
     description='A helper library for chemistry calculations,used by the edx-platform',
     long_description=long_description,
-    version='1.2.0',
+    version=VERSION,
     packages=["chem"],
     install_requires=load_requirements('requirements/base.in'),
     test_suite='chem.tests',
