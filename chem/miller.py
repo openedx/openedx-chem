@@ -1,15 +1,13 @@
 """ Calculation of Miller indices """
 
-from __future__ import absolute_import
+
 import decimal
 import fractions as fr
 import json
 import math
+from functools import reduce
 
 import numpy as np
-from six.moves import map
-from six.moves import range
-from functools import reduce
 
 
 def lcm(a, b):
