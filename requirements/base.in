@@ -6,4 +6,3 @@ nltk
 numpy
 pyparsing
 scipy
-six
