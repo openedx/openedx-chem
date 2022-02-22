@@ -9,8 +9,6 @@ help:  ## This.
 clean:  ## Remove all build artifacts
 	find . -name '*.pyc'
 
-test:  ## Run the library test suite
-	tox
 upgrade: ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	pip install -q pip-tools
 	pip install -q -r requirements/pip_tools.txt
