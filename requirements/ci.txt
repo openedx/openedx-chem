@@ -8,7 +8,7 @@ click==8.1.3
     # via
     #   -r requirements/test.txt
     #   nltk
-coverage==6.3.3
+coverage==6.4
     # via -r requirements/test.txt
 distlib==0.3.4
     # via
@@ -27,7 +27,7 @@ markupsafe==2.1.1
     # via -r requirements/test.txt
 nltk==3.7
     # via -r requirements/test.txt
-numpy==1.22.3
+numpy==1.22.4
     # via
     #   -r requirements/test.txt
     #   scipy
@@ -56,7 +56,7 @@ regex==2022.4.24
     # via
     #   -r requirements/test.txt
     #   nltk
-scipy==1.8.0
+scipy==1.8.1
     # via -r requirements/test.txt
 six==1.16.0
     # via
