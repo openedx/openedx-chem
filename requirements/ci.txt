@@ -8,13 +8,13 @@ click==8.1.3
     # via
     #   -r requirements/test.txt
     #   nltk
-coverage==6.4
+coverage==6.4.1
     # via -r requirements/test.txt
 distlib==0.3.4
     # via
     #   -r requirements/tox.txt
     #   virtualenv
-filelock==3.7.0
+filelock==3.7.1
     # via
     #   -r requirements/tox.txt
     #   tox
@@ -52,7 +52,7 @@ pyparsing==3.0.9
     #   -r requirements/test.txt
     #   -r requirements/tox.txt
     #   packaging
-regex==2022.4.24
+regex==2022.6.2
     # via
     #   -r requirements/test.txt
     #   nltk
