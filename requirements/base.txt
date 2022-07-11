@@ -12,13 +12,13 @@ markupsafe==2.1.1
     # via -r requirements/base.in
 nltk==3.7
     # via -r requirements/base.in
-numpy==1.23.0
+numpy==1.23.1
     # via
     #   -r requirements/base.in
     #   scipy
 pyparsing==3.0.9
     # via -r requirements/base.in
-regex==2022.6.2
+regex==2022.7.9
     # via nltk
 scipy==1.8.1
     # via -r requirements/base.in
