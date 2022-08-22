@@ -18,7 +18,7 @@ numpy==1.23.2
     #   scipy
 pyparsing==3.0.9
     # via -r requirements/base.in
-regex==2022.7.25
+regex==2022.8.17
     # via nltk
 scipy==1.9.0
     # via -r requirements/base.in
