@@ -28,7 +28,7 @@ regex==2022.8.17
     # via
     #   -r requirements/base.txt
     #   nltk
-scipy==1.9.0
+scipy==1.9.1
     # via -r requirements/base.txt
 tqdm==4.64.0
     # via

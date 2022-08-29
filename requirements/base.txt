@@ -20,7 +20,7 @@ pyparsing==3.0.9
     # via -r requirements/base.in
 regex==2022.8.17
     # via nltk
-scipy==1.9.0
+scipy==1.9.1
     # via -r requirements/base.in
 tqdm==4.64.0
     # via nltk
