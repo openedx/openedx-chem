@@ -68,11 +68,11 @@ toml==0.10.2
     #   tox
 tox==3.25.1
     # via -r requirements/tox.txt
-tqdm==4.64.0
+tqdm==4.64.1
     # via
     #   -r requirements/test.txt
     #   nltk
-virtualenv==20.16.3
+virtualenv==20.16.4
     # via
     #   -r requirements/tox.txt
     #   tox

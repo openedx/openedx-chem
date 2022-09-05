@@ -30,7 +30,7 @@ regex==2022.8.17
     #   nltk
 scipy==1.9.1
     # via -r requirements/base.txt
-tqdm==4.64.0
+tqdm==4.64.1
     # via
     #   -r requirements/base.txt
     #   nltk
