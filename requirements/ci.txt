@@ -27,7 +27,7 @@ markupsafe==2.1.1
     # via -r requirements/test.txt
 nltk==3.7
     # via -r requirements/test.txt
-numpy==1.23.2
+numpy==1.23.3
     # via
     #   -r requirements/test.txt
     #   scipy
@@ -52,7 +52,7 @@ pyparsing==3.0.9
     #   -r requirements/test.txt
     #   -r requirements/tox.txt
     #   packaging
-regex==2022.8.17
+regex==2022.9.11
     # via
     #   -r requirements/test.txt
     #   nltk
@@ -62,17 +62,17 @@ six==1.16.0
     # via
     #   -r requirements/tox.txt
     #   tox
-toml==0.10.2
+tomli==2.0.1
     # via
     #   -r requirements/tox.txt
     #   tox
-tox==3.25.1
+tox==3.26.0
     # via -r requirements/tox.txt
 tqdm==4.64.1
     # via
     #   -r requirements/test.txt
     #   nltk
-virtualenv==20.16.4
+virtualenv==20.16.5
     # via
     #   -r requirements/tox.txt
     #   tox
