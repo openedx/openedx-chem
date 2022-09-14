@@ -15,5 +15,5 @@ The code in this repository is licensed under version 3 of the AGPL
 unless otherwise noted. Please see the `LICENSE`_ file for details.
 
 
-.. _edx-platform: https://github.com/edx/edx-platform
-.. _LICENSE: https://github.com/edx/openedx-chem/blob/master/LICENSE
+.. _edx-platform: https://github.com/openedx/edx-platform
+.. _LICENSE: https://github.com/openedx/openedx-chem/blob/master/LICENSE

@@ -58,7 +58,7 @@ setup(
     tests_require=load_requirements('requirements/test.in'),
     keywords=['openedx chem'],
     author='edX',
-    url='https://github.com/edx/openedx-chem',
+    url='https://github.com/openedx/openedx-chem',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
