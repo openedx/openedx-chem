@@ -8,7 +8,7 @@ click==8.1.3
     # via
     #   -r requirements/test.txt
     #   nltk
-coverage==6.4.4
+coverage==6.5.0
     # via -r requirements/test.txt
 distlib==0.3.6
     # via
@@ -19,7 +19,7 @@ filelock==3.8.0
     #   -r requirements/tox.txt
     #   tox
     #   virtualenv
-joblib==1.1.0
+joblib==1.2.0
     # via
     #   -r requirements/test.txt
     #   nltk
@@ -27,7 +27,7 @@ markupsafe==2.1.1
     # via -r requirements/test.txt
 nltk==3.7
     # via -r requirements/test.txt
-numpy==1.23.3
+numpy==1.23.4
     # via
     #   -r requirements/test.txt
     #   scipy
@@ -35,7 +35,7 @@ packaging==21.3
     # via
     #   -r requirements/tox.txt
     #   tox
-platformdirs==2.5.2
+platformdirs==2.5.4
     # via
     #   -r requirements/tox.txt
     #   virtualenv
@@ -52,11 +52,11 @@ pyparsing==3.0.9
     #   -r requirements/test.txt
     #   -r requirements/tox.txt
     #   packaging
-regex==2022.9.11
+regex==2022.10.31
     # via
     #   -r requirements/test.txt
     #   nltk
-scipy==1.9.1
+scipy==1.9.3
     # via -r requirements/test.txt
 six==1.16.0
     # via
@@ -66,13 +66,13 @@ tomli==2.0.1
     # via
     #   -r requirements/tox.txt
     #   tox
-tox==3.26.0
+tox==3.27.0
     # via -r requirements/tox.txt
 tqdm==4.64.1
     # via
     #   -r requirements/test.txt
     #   nltk
-virtualenv==20.16.5
+virtualenv==20.16.7
     # via
     #   -r requirements/tox.txt
     #   tox
