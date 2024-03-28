@@ -18,9 +18,10 @@ def lcm(a, b):
         a, b: floats
 
     Returns:
-        float
+        int: Because math.gcd will only return int after python 3.9
+        Previously it depended on type of args, now it'll only return int
     """
-    return a * b / fr.gcd(a, b)
+    return a * b / math.gcd(int(a), int(b))
 
 
 def segment_to_fraction(distance):
