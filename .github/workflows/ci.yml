@@ -15,8 +15,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04]
-        python-version: ['3.8']
-        toxenv: [django32, django40, quality]
+        python-version: ['3.8', '3.11']
+        toxenv: [quality, django42]
     steps:
     - uses: actions/checkout@v2
     - name: Setup Python
@@ -24,7 +24,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install APT Packages
-      run: sudo apt-get install libblas-dev liblapack-dev gfortran
+      run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev gfortran
     - name: Install dependencies
       run: pip install -r requirements/ci.txt
     - name: Run Tests
@@ -32,7 +32,7 @@ jobs:
         TOXENV: ${{ matrix.toxenv }}
       run: tox
     - name: Run Coverage
-      if: matrix.python-version == '3.8' && matrix.toxenv=='django32'
+      if: matrix.python-version == '3.8' && matrix.toxenv=='django42'
       uses: codecov/codecov-action@v2
       with:
         fail_ci_if_error: true
