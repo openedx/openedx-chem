@@ -8,9 +8,9 @@ click==8.1.7
     # via
     #   -r requirements/base.txt
     #   nltk
-coverage==7.4.4
+coverage==7.5.4
     # via -r requirements/test.in
-joblib==1.3.2
+joblib==1.4.2
     # via
     #   -r requirements/base.txt
     #   nltk
@@ -24,13 +24,13 @@ numpy==1.24.4
     #   scipy
 pyparsing==3.1.2
     # via -r requirements/base.txt
-regex==2023.12.25
+regex==2024.5.15
     # via
     #   -r requirements/base.txt
     #   nltk
 scipy==1.10.1
     # via -r requirements/base.txt
-tqdm==4.66.2
+tqdm==4.66.4
     # via
     #   -r requirements/base.txt
     #   nltk
