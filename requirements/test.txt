@@ -8,7 +8,7 @@ click==8.1.7
     # via
     #   -r requirements/base.txt
     #   nltk
-coverage==7.5.4
+coverage==7.6.0
     # via -r requirements/test.in
 joblib==1.4.2
     # via

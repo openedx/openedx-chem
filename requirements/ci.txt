@@ -20,7 +20,7 @@ colorama==0.4.6
     # via
     #   -r requirements/tox.txt
     #   tox
-coverage==7.5.4
+coverage==7.6.0
     # via -r requirements/test.txt
 distlib==0.3.8
     # via
@@ -74,7 +74,7 @@ tomli==2.0.1
     #   -r requirements/tox.txt
     #   pyproject-api
     #   tox
-tox==4.15.1
+tox==4.16.0
     # via -r requirements/tox.txt
 tqdm==4.66.4
     # via
