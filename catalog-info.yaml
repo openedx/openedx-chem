@@ -6,13 +6,6 @@ kind: Component
 metadata:
   name: 'openedx-chem'
   description: "A library for chemistry calculations, used by the edx-platform."
-  links:
-    - url: "https://github.com/openedx/openedx-chem"
-      title: "openedx/openedx-chem"
-      icon: "GitHub"
-  annotations:
-    openedx.org/arch-interest-groups: ""
-    openedx.org/release: "main"
 spec:
   owner: group:openedx-unmaintained
   type: 'library'
