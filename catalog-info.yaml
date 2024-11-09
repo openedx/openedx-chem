@@ -7,6 +7,6 @@ metadata:
   name: 'openedx-chem'
   description: "A library for chemistry calculations, used by the edx-platform."
 spec:
-  owner: group:openedx-unmaintained
+  owner: codewithemad
   type: 'library'
   lifecycle: 'production'
