@@ -14,7 +14,7 @@ dill==0.4.0
     # via pylint
 isort==6.0.1
     # via pylint
-joblib==1.4.2
+joblib==1.5.0
     # via
     #   -r requirements/base.txt
     #   nltk
@@ -32,7 +32,7 @@ platformdirs==4.3.7
     # via pylint
 pycodestyle==2.13.0
     # via -r requirements/quality.in
-pylint==3.3.6
+pylint==3.3.7
     # via -r requirements/quality.in
 pyparsing==3.2.3
     # via -r requirements/base.txt
