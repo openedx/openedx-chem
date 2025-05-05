@@ -6,7 +6,7 @@
 #
 click==8.1.8
     # via nltk
-joblib==1.4.2
+joblib==1.5.0
     # via nltk
 markupsafe==3.0.2
     # via -r requirements/base.in

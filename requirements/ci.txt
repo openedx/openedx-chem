@@ -37,7 +37,7 @@ iniconfig==2.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
-joblib==1.4.2
+joblib==1.5.0
     # via
     #   -r requirements/test.txt
     #   nltk
