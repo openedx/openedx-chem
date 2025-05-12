@@ -12,7 +12,7 @@ chardet==5.2.0
     # via
     #   -r requirements/tox.txt
     #   tox
-click==8.1.8
+click==8.2.0
     # via
     #   -r requirements/test.txt
     #   nltk
@@ -37,7 +37,7 @@ iniconfig==2.1.0
     # via
     #   -r requirements/test.txt
     #   pytest
-joblib==1.4.2
+joblib==1.5.0
     # via
     #   -r requirements/test.txt
     #   nltk
@@ -56,7 +56,7 @@ packaging==25.0
     #   pyproject-api
     #   pytest
     #   tox
-platformdirs==4.3.7
+platformdirs==4.3.8
     # via
     #   -r requirements/tox.txt
     #   tox
@@ -83,7 +83,7 @@ regex==2024.11.6
     # via
     #   -r requirements/test.txt
     #   nltk
-scipy==1.15.2
+scipy==1.15.3
     # via -r requirements/test.txt
 tox==4.25.0
     # via -r requirements/tox.txt
@@ -91,7 +91,7 @@ tqdm==4.67.1
     # via
     #   -r requirements/test.txt
     #   nltk
-virtualenv==20.30.0
+virtualenv==20.31.2
     # via
     #   -r requirements/tox.txt
     #   tox
