@@ -10,7 +10,7 @@ clean:  ## Remove all build artifacts
 	find . -name '*.pyc'
 
 test:  ## Run the library test suite
-	uv run tox
+	tox
 
 requirements: ## install development environment requirements
 	uv sync --group dev
