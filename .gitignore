@@ -3,4 +3,10 @@
 .tox
 .git
 venv/*
+.venv
 __pycache__/
+dist/
+build/
+htmlcov/
+.coverage
+coverage.xml

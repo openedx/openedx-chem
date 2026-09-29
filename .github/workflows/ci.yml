@@ -1,38 +1,37 @@
 name: Python CI
 
 on:
-  push:
-    branches:
-    - master
+  workflow_call:
   pull_request:
     branches:
     - '**'
 
 jobs:
   run_tests:
-    name: Tests
+    name: ${{ matrix.toxenv }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.12']
-        toxenv: [quality, django42]
+        toxenv: [py, quality]
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-    - name: Setup Python
-      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-      with:
-        python-version: ${{ matrix.python-version }}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Install APT Packages
       run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev gfortran
-    - name: Install dependencies
-      run: pip install -r requirements/ci.txt
+    - name: Install uv
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
+    - name: Install CI dependencies
+      run: uv sync --group ci
     - name: Run Tests
-      env:
-        TOXENV: ${{ matrix.toxenv }}
-      run: tox
+      run: uv run tox -e ${{ matrix.toxenv }}
     - name: Run Coverage
-      if: matrix.python-version == '3.12' && matrix.toxenv=='django42'
+      if: matrix.python-version == '3.12' && matrix.toxenv == 'py'
       uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
