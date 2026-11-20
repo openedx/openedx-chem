@@ -7,7 +7,71 @@ import json
 import math
 from functools import reduce
 
-import numpy as np
+
+def _sub(a, b):
+    """
+    Returns the 3D vector a - b.
+    """
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+
+
+def _cross(a, b):
+    """
+    Returns the cross product of 3D vectors a and b.
+    """
+    return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+
+
+def _fma(x, y, z):
+    """
+    Returns x * y + z, rounded once at the end: a fused multiply-add.
+
+    This is math.fma, which needs Python 3.13, except that where math.fma
+    raises an exception this returns inf or nan, as numpy did.
+    """
+    if not (math.isfinite(x) and math.isfinite(y)):
+        return x * y + z
+    if not math.isfinite(z):
+        return z
+    exact = fr.Fraction(x) * fr.Fraction(y) + fr.Fraction(z)
+    if not exact:
+        return x * y + z  # Exact here too, and it gives the zero its sign.
+    try:
+        return float(exact)
+    except OverflowError:
+        return math.inf if exact > 0 else -math.inf
+
+
+# _miller() tests dot products for exact zeros, so the last bit of a dot product
+# decides how some answers are graded. chem used to get them from np.dot, which
+# rounded in one of the two ways below, depending on the CPU. Both are kept,
+# term for term and in the same order. math.sumprod rounds differently from
+# both of them. See miller() for how they're used.
+
+
+def _dot_fused(a, b):
+    """
+    Returns the dot product of 3D vectors a and b, rounded as np.dot rounded
+    it on x86-64 CPUs with AVX-512.
+
+    The first product is rounded. Each of the others is added to the sum so
+    far without being rounded first.
+    """
+    return _fma(a[2], b[2], _fma(a[1], b[1], a[0] * b[0]))
+
+
+def _dot_plain(a, b):
+    """
+    Returns the dot product of 3D vectors a and b, rounded as np.dot rounded
+    it on x86-64 CPUs without AVX-512.
+
+    Every product is rounded before it's added.
+    """
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
 
 def lcm(a, b):
@@ -33,7 +97,7 @@ def segment_to_fraction(distance):
     purely for simplicity and clearance of learning purposes. Jenny: 'In typical
     courses students usually do not encounter indices any higher than 6'.
 
-    If distance is not a number (numpy nan), it means that plane is parallel to
+    If distance is not a number (nan), it means that plane is parallel to
     axis or contains it. Inverted fraction to nan (nan is 1/0) = 0 / 1 is
     returned
 
@@ -69,7 +133,7 @@ def segment_to_fraction(distance):
          0 / 1 if distance is nan
 
     """
-    if np.isnan(distance):
+    if math.isnan(distance):
         return fr.Fraction(0, 1)
     else:
         fract = fr.Fraction(distance).limit_denominator(10)
@@ -107,9 +171,9 @@ def sub_miller(segments):
     return'(' + ','.join(map(str, list(map(decimal.Decimal, miller_indices)))) + ')'
 
 
-def miller(points):
+def _miller(points, dot):
     """
-    Calculates Miller indices from points.
+    Calculates Miller indices from points, using dot for the dot products.
 
     Algorithm:
 
@@ -140,48 +204,82 @@ def miller(points):
     6. Run function that calculates miller indices from segments.
 
     Args:
-        List of points. Each point is list of float coordinates. Order of
-        coordinates in point's list: x, y, z. Points are different!
+        points: see miller().
+        dot: function that returns the dot product of two 3D vectors.
 
     Returns:
         String that represents Miller indices, e.g: (-6,3,-6) or (2,2,2)
     """
-
-    N = np.cross(points[1] - points[0], points[2] - points[0])
-    O = np.array([0, 0, 0])
+    N = _cross(_sub(points[1], points[0]), _sub(points[2], points[0]))
+    O = (0.0, 0.0, 0.0)
     P = points[0]  # point of plane
-    Ccs = list(map(np.array, [[1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]]))
-    segments = ([
-        np.dot(P - O, N) / np.dot(ort, N) if np.dot(ort, N) != 0
-        else np.nan for ort in Ccs
-    ])
+    Ccs = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
+    segments = [
+        dot(_sub(P, O), N) / dot(ort, N) if dot(ort, N) != 0
+        else math.nan for ort in Ccs
+    ]
     if any(x == 0 for x in segments):  # Plane goes through origin.
         vertices = [
             # top:
-            np.array([1.0, 1.0, 1.0]),
-            np.array([0.0, 0.0, 1.0]),
-            np.array([1.0, 0.0, 1.0]),
-            np.array([0.0, 1.0, 1.0]),
+            (1.0, 1.0, 1.0),
+            (0.0, 0.0, 1.0),
+            (1.0, 0.0, 1.0),
+            (0.0, 1.0, 1.0),
             # bottom, except 0,0,0:
-            np.array([1.0, 0.0, 0.0]),
-            np.array([0.0, 1.0, 0.0]),
-            np.array([1.0, 1.0, 1.0]),
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (1.0, 1.0, 1.0),
         ]
         for vertex in vertices:
-            if np.dot(vertex - O, N) != 0:  # vertex not in plane
+            if dot(_sub(vertex, O), N) != 0:  # vertex not in plane
                 new_origin = vertex
                 break
         # obtain new axes with center in new origin
-        X = np.array([1 - new_origin[0], new_origin[1], new_origin[2]])
-        Y = np.array([new_origin[0], 1 - new_origin[1], new_origin[2]])
-        Z = np.array([new_origin[0], new_origin[1], 1 - new_origin[2]])
-        new_Ccs = [X - new_origin, Y - new_origin, Z - new_origin]
-        segments = ([np.dot(P - new_origin, N) / np.dot(ort, N) if
-                    np.dot(ort, N) != 0 else np.nan for ort in new_Ccs])
+        X = (1 - new_origin[0], new_origin[1], new_origin[2])
+        Y = (new_origin[0], 1 - new_origin[1], new_origin[2])
+        Z = (new_origin[0], new_origin[1], 1 - new_origin[2])
+        new_Ccs = [_sub(X, new_origin), _sub(Y, new_origin), _sub(Z, new_origin)]
+        segments = [
+            dot(_sub(P, new_origin), N) / dot(ort, N) if dot(ort, N) != 0
+            else math.nan for ort in new_Ccs
+        ]
         # fix signs of indices: 0 -> 1, 1 -> -1 (
-        segments = (1 - 2 * new_origin) * segments
+        segments = [
+            (1 - 2 * coordinate) * segment
+            for coordinate, segment in zip(new_origin, segments)
+        ]
 
     return sub_miller(segments)
+
+
+def miller(points):
+    """
+    Calculates Miller indices from points.
+
+    Args:
+        List of points. Each point is a sequence of three float coordinates,
+        in the order x, y, z. Points are different! Only the first three
+        points are used.
+
+    Returns:
+        String that represents Miller indices, e.g: (-6,3,-6) or (2,2,2)
+
+    Raises:
+        ValueError: if a point doesn't have exactly three coordinates.
+    """
+    if any(len(point) != 3 for point in points[:3]):
+        raise ValueError("Each point must have exactly three coordinates.")
+
+    # Fused rounding goes first, so every answer that got Miller indices on a
+    # CPU with AVX-512 still gets the same ones. It's worse than plain rounding
+    # at noticing that a plane goes through the origin, though, and when it
+    # doesn't notice, sub_miller() raises ZeroDivisionError. So those answers
+    # get a second try, with plain rounding.
+    try:
+        return _miller(points, _dot_fused)
+    except ZeroDivisionError:
+        pass
+    return _miller(points, _dot_plain)
 
 
 def grade(user_input, correct_answer):
@@ -267,7 +365,6 @@ def grade(user_input, correct_answer):
     # round point to closes 0.05 value
     points = [round0_25(point) for point in points]
 
-    points = [np.array(point) for point in points]
     # print miller(points), (correct_answer['miller'].replace(' ', ''),
     #     negative(correct_answer['miller']).replace(' ', ''))
     if miller(points) in (correct_answer['miller'].replace(' ', ''), negative(correct_answer['miller']).replace(' ', '')):
