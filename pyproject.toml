@@ -23,7 +23,6 @@ classifiers = [
 ]
 dependencies = [
     "markupsafe",
-    "numpy",
     "pyparsing>=3.0",
 ]
 
