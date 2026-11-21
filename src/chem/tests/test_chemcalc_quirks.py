@@ -59,8 +59,8 @@ class TestCompatibilityQuirks(unittest.TestCase):
         with floats, not exact fractions.
 
         So H2O / 3H2O returns the value of the float nearest to 1/3, rather
-        than Fraction(1, 3) as its docstring says. Rounding can also make
-        proportional fractional counts look not proportional.
+        than Fraction(1, 3). Rounding can also make proportional fractional
+        counts look not proportional.
         """
         self.assertEqual(divide_chemical_expression("H2O", "3H2O"), Fraction(1 / 3))
         self.assertNotEqual(divide_chemical_expression("H2O", "3H2O"), Fraction(1, 3))

@@ -7,6 +7,8 @@ import threading
 import unittest
 from fractions import Fraction
 
+from pyparsing import ParseException
+
 import chem.miller
 from chem.chemcalc import (MAX_NESTING, Tree, chemical_equations_equal,
                            compare_chemical_expression,
@@ -220,6 +222,15 @@ class TestDivideExpressions(unittest.TestCase):
     def test_divide_fract_to_frac_wrog(self):
         self.assertFalse(divide_chemical_expression(
             "6/2CO2 + H2O", "2H2O+9/6CO2"), 2)
+
+    def test_divide_syntax_error_message(self):
+        # This error reaches problem authors' code, so its message should name
+        # what was expected rather than list every element symbol.
+        with self.assertRaises(ParseException) as caught:
+            divide_chemical_expression("H2O", ")H")
+        message = str(caught.exception)
+        self.assertIn("element", message)
+        self.assertLess(len(message), 200)
 
 
 class TestRenderEquations(unittest.TestCase):

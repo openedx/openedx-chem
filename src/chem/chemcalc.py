@@ -161,12 +161,18 @@ _number_suffix = _digits().add_parse_action(_tree("number_suffix"))
 _suffix = (_number_suffix + Opt(_ion) | _ion).set_parse_action(_tree("suffix"))
 
 # Try longer symbols first, so that "Co" is cobalt rather than "C" + "o".
-_element = Regex("|".join(sorted(elements, key=len, reverse=True)))
+#
+# The names given to this and the two bracketed groups are what a
+# ParseException's message calls them. Without names, a message that says
+# what was expected lists every element symbol.
+_element = Regex("|".join(sorted(elements, key=len, reverse=True))).set_name("element")
 _element.set_parse_action(_tree("element"))
 
 _group = Forward()
-_round = (Suppress("(") + _group + Suppress(")")).set_parse_action(_bracketed("paren_group_round"))
-_square = (Suppress("[") + _group + Suppress("]")).set_parse_action(_bracketed("paren_group_square"))
+_round = (Suppress("(") + _group + Suppress(")")).set_name("(group)")
+_round.set_parse_action(_bracketed("paren_group_round"))
+_square = (Suppress("[") + _group + Suppress("]")).set_name("[group]")
+_square.set_parse_action(_bracketed("paren_group_square"))
 _group <<= OneOrMore(
     ((_element | _round | _square) + Opt(_suffix)).set_parse_action(_suffixed)
 ).set_parse_action(_tree("group"))
@@ -319,7 +325,7 @@ def divide_chemical_expression(s1, s2, ignore_state=False):
     - if ignore_state is True, ignores phases when doing the comparison.
 
     Examples:
-    divide_chemical_expression("H2O", "3H2O") -> Fraction(1,3)
+    divide_chemical_expression("H2O", "3H2O") -> Fraction(1 / 3)  # not Fraction(1, 3): see "float-factors" below.
     divide_chemical_expression("3H2O", "H2O") -> 3  # actually Fraction(3, 1), but compares == to 3.
     divide_chemical_expression("2H2O(s) + 2CO2", "H2O(s)+CO2") -> 2
     divide_chemical_expression("H2O(s) + CO2", "3H2O(s)+2CO2") -> False
