@@ -2,11 +2,15 @@
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
 
+import importlib.util
+import threading
 import unittest
 from fractions import Fraction
 
+from pyparsing import ParseException
+
 import chem.miller
-from chem.chemcalc import (chemical_equations_equal,
+from chem.chemcalc import (MAX_NESTING, Tree, chemical_equations_equal,
                            compare_chemical_expression,
                            divide_chemical_expression, render_to_html)
 from chem.chemtools import (vsepr_build_correct_answer, vsepr_grade,
@@ -71,6 +75,10 @@ class TestCompareEquations(unittest.TestCase):
 
         self.assertFalse(chemical_equations_equal('H2 + O2 ==> H2O2',   # strange arrow
                                                   '2O2 + 2H2 -> 2H2O2'))
+
+        # Braces used to raise ValueError instead of counting as a syntax error.
+        self.assertFalse(chemical_equations_equal('H2 + O2 -> {H2O2}',
+                                                  'H2 + O2 -> H2O2'))
 
 
 class TestCompareExpressions(unittest.TestCase):
@@ -151,6 +159,12 @@ class TestCompareExpressions(unittest.TestCase):
     def test_compare_one_subscript_explicitly_set(self):
         self.assertFalse(compare_chemical_expression("H2 + CO2", "H2 + C102"))
 
+    def test_compare_bracketed_molecule(self):
+        # A molecule that is just a bracketed group still compares by its contents.
+        self.assertTrue(compare_chemical_expression("(OH) + [Ar]", "[Ar] + (OH)"))
+        self.assertFalse(compare_chemical_expression("(OH)", "(H2)"))
+        self.assertFalse(compare_chemical_expression("[Ar]", "[Kr]"))
+
 
 class TestDivideExpressions(unittest.TestCase):
     ''' as compare_ use divide_,
@@ -208,6 +222,15 @@ class TestDivideExpressions(unittest.TestCase):
     def test_divide_fract_to_frac_wrog(self):
         self.assertFalse(divide_chemical_expression(
             "6/2CO2 + H2O", "2H2O+9/6CO2"), 2)
+
+    def test_divide_syntax_error_message(self):
+        # This error reaches problem authors' code, so its message should name
+        # what was expected rather than list every element symbol.
+        with self.assertRaises(ParseException) as caught:
+            divide_chemical_expression("H2O", ")H")
+        message = str(caught.exception)
+        self.assertIn("element", message)
+        self.assertLess(len(message), 200)
 
 
 class TestRenderEquations(unittest.TestCase):
@@ -317,6 +340,29 @@ class TestRenderEquations(unittest.TestCase):
         correct = '<span class="math">[H<sup>+</sup>]+OH<sup>-</sup>\u2194(H<sub>2</sub>O)</span>'
         self.assertEqual(out, correct)
 
+    def test_render_braces(self):
+        test_string = "{H2O}"
+        out = render_to_html(test_string)
+        correct = '<span class="math"><span class="inline-error inline">{H2O}</span></span>'
+        self.assertEqual(out, correct)
+
+    def test_render_deeply_nested(self):
+        test_string = "(" * 500 + "H" + ")" * 500
+        out = render_to_html(test_string)
+        self.assertIn('<span class="inline-error inline">', out)
+        self.assertFalse(chemical_equations_equal(test_string + " -> H", test_string + " -> H"))
+
+    def test_render_nesting_limit(self):
+        error = '<span class="inline-error inline">'
+        at_limit = "(" * MAX_NESTING + "H" + ")" * MAX_NESTING
+        self.assertNotIn(error, render_to_html(at_limit))
+        self.assertTrue(compare_chemical_expression(at_limit, at_limit))
+        self.assertIn(error, render_to_html("(" + at_limit + ")"))
+        # Round and square brackets count towards the same limit.
+        self.assertIn(error, render_to_html("[" + at_limit + "]"))
+        # Only brackets that are open at the same time count.
+        self.assertNotIn(error, render_to_html("(OH)" * (MAX_NESTING + 1)))
+
     def test_escaping(self):
         """
         Tests that invalid input is escaped.
@@ -325,6 +371,72 @@ class TestRenderEquations(unittest.TestCase):
         out = render_to_html(test_string)
         correct = '<span class="math"><span class="inline-error inline">&lt;script&gt;f()&lt;/script&gt;</span></span>'
         self.assertEqual(out, correct)
+
+
+class TestTree(unittest.TestCase):
+    """
+    Tree replaced nltk.tree.Tree, and should compare and sort the same way.
+    """
+    def test_equality_includes_label(self):
+        self.assertEqual(Tree('element', ['H']), Tree('element', ['H']))
+        self.assertNotEqual(Tree('element', ['H']), Tree('phase', ['H']))
+        self.assertNotEqual(Tree('element', ['H']), ['H'])
+
+    def test_ordering(self):
+        h, o = Tree('element', ['H']), Tree('element', ['O'])
+        self.assertLess(h, o)
+        self.assertLessEqual(h, h)
+        self.assertGreater(o, h)
+        self.assertGreaterEqual(o, o)
+        # Label first, then children
+        self.assertLess(Tree('element', ['Z']), Tree('phase', ['A']))
+        # Trees sort before strings
+        self.assertLess(h, 'H')
+        self.assertGreater('H', h)
+        self.assertEqual(sorted(['H', o, h]), [h, o, 'H'])
+
+    def test_str(self):
+        tree = Tree('group', [Tree('element', ['H']), Tree('element', ['O'])])
+        self.assertEqual(str(tree), '(group (element H) (element O))')
+
+
+class TestThreadSafety(unittest.TestCase):
+    """
+    The first parse in a process can come from several threads at once. For
+    example, a problem with two chemical equation inputs asks for both previews
+    as the page loads.
+    """
+    def first_parse_errors(self, threads):
+        """
+        Parse in several threads at once, and return the exceptions raised.
+        """
+        # Load a new copy of chemcalc, so that its grammar hasn't parsed anything yet.
+        spec = importlib.util.find_spec("chem.chemcalc")
+        chemcalc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(chemcalc)
+
+        barrier = threading.Barrier(threads)
+        errors = []
+
+        def parse():
+            barrier.wait()
+            try:
+                chemcalc.render_to_html("2H2O(l) + [Cu(NH3)4]^2+")
+            except Exception as err:  # pylint: disable=broad-exception-caught
+                errors.append(err)
+
+        workers = [threading.Thread(target=parse) for _ in range(threads)]
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join()
+        return errors
+
+    def test_first_parse_in_several_threads(self):
+        # When the grammar isn't thread-safe, one attempt fails about four
+        # times in five, so make several.
+        for _ in range(10):
+            self.assertEqual(self.first_parse_errors(threads=8), [])
 
 
 class TestCrystallographyMiller(unittest.TestCase):

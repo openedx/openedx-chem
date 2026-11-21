@@ -1,14 +1,11 @@
 from fractions import Fraction
-from functools import reduce
 
 import markupsafe
-import nltk
-from nltk.tree import Tree
-from pyparsing import Literal, OneOrMore, ParseException, StringEnd
+from pyparsing import (Char, Forward, Literal, OneOrMore, Opt, ParseException,
+                       Regex, StringEnd, Suppress, ZeroOrMore, nums, one_of)
 
 ARROWS = ('<->', '->')
 
-# Defines a simple pyparsing tokenizer for chemical equations
 elements = ['Ac', 'Ag', 'Al', 'Am', 'Ar', 'As', 'At', 'Au', 'B', 'Ba', 'Be',
             'Bh', 'Bi', 'Bk', 'Br', 'C', 'Ca', 'Cd', 'Ce', 'Cf', 'Cl', 'Cm',
             'Cn', 'Co', 'Cr', 'Cs', 'Cu', 'Db', 'Ds', 'Dy', 'Er', 'Es', 'Eu',
@@ -20,11 +17,12 @@ elements = ['Ac', 'Ag', 'Al', 'Am', 'Ar', 'As', 'At', 'Au', 'B', 'Ba', 'Be',
             'Ru', 'S', 'Sb', 'Sc', 'Se', 'Sg', 'Si', 'Sm', 'Sn', 'Sr', 'Ta',
             'Tb', 'Tc', 'Te', 'Th', 'Ti', 'Tl', 'Tm', 'U', 'Uuo', 'Uup',
             'Uus', 'Uut', 'V', 'W', 'Xe', 'Y', 'Yb', 'Zn', 'Zr']
-digits = list(map(str, list(range(10))))
-symbols = list("[](){}^+-/")
 phases = ["(s)", "(l)", "(g)", "(aq)"]
-tokens = reduce(lambda a, b: a ^ b, list(map(Literal, elements + digits + symbols + phases)))
-tokenizer = OneOrMore(tokens) + StringEnd()
+
+# The most brackets that can be open at once. No real formula comes close. The
+# limit keeps the parser, and the recursive functions that walk its trees, well
+# inside Python's recursion limit.
+MAX_NESTING = 20
 
 # HTML, Text are temporarily copied from openedx.core.djangolib.markup
 # These libraries need to be moved out of edx-platform to be used by
@@ -37,133 +35,156 @@ def HTML(html):                                 # pylint: disable=invalid-name
     return markupsafe.Markup(html)
 
 
-def _orjoin(l):
-    return "'" + "' | '".join(l) + "'"
-
-
-# Defines an NLTK parser for tokenized expressions
-grammar = """
-  S -> multimolecule | multimolecule '+' S
-  multimolecule -> count molecule | molecule
-  count -> number | number '/' number
-  molecule -> unphased | unphased phase
-  unphased -> group | paren_group_round | paren_group_square
-  element -> """ + _orjoin(elements) + """
-  digit -> """ + _orjoin(digits) + """
-  phase -> """ + _orjoin(phases) + """
-  number -> digit | digit number
-  group -> suffixed | suffixed group
-  paren_group_round -> '(' group ')'
-  paren_group_square -> '[' group ']'
-  plus_minus -> '+' | '-'
-  number_suffix -> number
-  ion_suffix -> '^' number plus_minus | '^' plus_minus
-  suffix -> number_suffix | number_suffix ion_suffix | ion_suffix
-  unsuffixed -> element | paren_group_round | paren_group_square
-
-  suffixed -> unsuffixed | unsuffixed suffix
-"""
-parser = nltk.ChartParser(nltk.CFG.fromstring(grammar))
-
-
-def _clean_parse_tree(tree):
+class Tree(list):
     """
-    The parse tree contains a lot of redundant
-    nodes. E.g. paren_groups have groups as children, etc. This will
-    clean up the tree.
+    A parse tree node: a label and a list of children (Trees or strings).
+
+    This covers the parts of nltk.tree.Tree that this module used to rely on.
+    It also orders the same way (by label, then children, with Trees before
+    strings), since divide_chemical_expression sorts molecules to compare them.
     """
-    def unparse_number(n):
+
+    def __init__(self, label, children=()):
+        super().__init__(children)
+        self._label = label
+
+    def label(self):
+        return self._label
+
+    def subtrees(self, filter=None):  # pylint: disable=redefined-builtin
         """
-        Go from a number parse tree to a number
+        Yield this tree and every Tree below it that passes `filter`, depth first.
         """
-        if len(n) == 1:
-            rv = n[0][0]
-        else:
-            rv = n[0][0] + unparse_number(n[1])
-        return rv
+        if filter is None or filter(self):
+            yield self
+        for child in self:
+            if isinstance(child, Tree):
+                yield from child.subtrees(filter)
 
-    def null_tag(n):
-        """
-        Remove a tag
-        """
-        return n[0]
+    def _key(self):
+        return (self._label, list(self))
 
-    def ion_suffix(n):
-        """
-        1. "if" part handles special case
-        2. "else" part is general behaviour
-        """
-        if n[1:][0].label() == 'number' and n[1:][0][0][0] == '1':
-            # if suffix is explicitly 1, like ^1-
-            # strip 1, leave only sign: ^-
-            return nltk.tree.Tree(n.label(), n[2:])
-        else:
-            return nltk.tree.Tree(n.label(), n[1:])
+    def __eq__(self, other):
+        return isinstance(other, Tree) and self._key() == other._key()
 
-    dispatch = {'number': lambda x: nltk.tree.Tree("number", [unparse_number(x)]),
-                'unphased': null_tag,
-                'unsuffixed': null_tag,
-                'number_suffix': lambda x: nltk.tree.Tree('number_suffix', [unparse_number(x[0])]),
-                'suffixed': lambda x: len(x) > 1 and x or x[0],
-                'ion_suffix': ion_suffix,
-                'paren_group_square': lambda x: nltk.tree.Tree(x.label(), x[1]),
-                'paren_group_round': lambda x: nltk.tree.Tree(x.label(), x[1])}
+    def __ne__(self, other):
+        return not self == other
 
-    if isinstance(tree, str):
-        return tree
+    def __lt__(self, other):
+        if isinstance(other, Tree):
+            return self._key() < other._key()
+        return type(self).__name__ < type(other).__name__
 
-    old_node = None
-    # This loop means that if a node is processed, and returns a child,
-    # the child will be processed.
-    while tree.label() in dispatch and tree.label() != old_node:
-        old_node = tree.label()
-        tree = dispatch[tree.label()](tree)
+    def __le__(self, other):
+        return self < other or self == other
 
-    children = []
-    for child in tree:
-        child = _clean_parse_tree(child)
-        children.append(child)
+    def __gt__(self, other):
+        return not self <= other
 
-    tree = nltk.tree.Tree(tree.label(), children)
+    def __ge__(self, other):
+        return not self < other
 
-    return tree
+    def __str__(self):
+        return "({} {})".format(self._label, " ".join(str(child) for child in self))
 
 
-def _merge_children(tree, tags):
+# The parse actions below all take pyparsing's full (string, location, tokens)
+# arguments, though they only use the tokens. If an action takes fewer,
+# pyparsing finds out how many by trial and error the first time it's called.
+# That isn't thread-safe: threads that parse at the same time in a new process
+# can leave the action raising TypeError on every later call.
+
+
+def _tree(label):
     """
-    nltk, by documentation, cannot do arbitrary length groups.
-    Instead of: (group 1 2 3 4)
-    It has to handle this recursively: (group 1 (group 2 (group 3 (group 4))))
-    We do the cleanup of converting from the latter to the former.
+    Make a parse action that wraps all of an expression's tokens in one Tree.
     """
-    if tree is None:
-        # There was a problem--shouldn't have empty trees (NOTE: see this with input e.g. 'H2O(', or 'Xe+').
-        raise ParseException("Shouldn't have empty trees")
+    # pyparsing reads a returned list (which a Tree is) as a list of tokens,
+    # so return the Tree inside a list.
+    return lambda _string, _location, tokens: [Tree(label, tokens.as_list())]
 
-    if isinstance(tree, str):
-        return tree
 
-    merged_children = []
-    done = False
+def _bracketed(label):
+    """
+    Make a parse action for a bracketed group: its children are the group's.
+    """
+    return lambda _string, _location, tokens: [Tree(label, tokens[0])]
 
-    # Merge current tag
-    while not done:
-        done = True
-        for child in tree:
-            if isinstance(child, nltk.tree.Tree) and child.label() == tree.label() and tree.label() in tags:
-                merged_children = merged_children + list(child)
-                done = False
-            else:
-                merged_children = merged_children + [child]
-        tree = nltk.tree.Tree(tree.label(), merged_children)
-        merged_children = []
 
-    # And recurse
-    children = []
-    for child in tree:
-        children.append(_merge_children(child, tags))
+def _suffixed(_string, _location, tokens):
+    """
+    Parse action for an element or bracketed group with an optional suffix.
 
-    return nltk.tree.Tree(tree.label(), children)
+    Only wrap it in a "suffixed" Tree if there is a suffix.
+    """
+    if len(tokens) > 1:
+        return [Tree("suffixed", tokens.as_list())]
+    return tokens
+
+
+def _ion_suffix(_string, _location, tokens):
+    """
+    Parse action for a charge like ^2+ or ^-.
+    """
+    children = tokens.as_list()
+    if len(children) == 2 and children[0][0].startswith("1"):
+        # Drop an explicit charge of 1, so that ^1+ is the same as ^+.
+        #
+        # Compatibility quirk "charge-starting-with-1" (see
+        # test_chemcalc_quirks.py): this only checks the first digit, so ^12+
+        # is also read as ^+. That's probably a bug, but fixing it would
+        # change how existing answers are rendered and graded.
+        children = children[1:]
+    return [Tree("ion_suffix", children)]
+
+
+def _digits():
+    """
+    One or more digits, read as a single string.
+
+    Compatibility quirk "space-inside-number" (see test_chemcalc_quirks.py):
+    each digit is a separate token, so spaces between digits are skipped and
+    "1 0" reads as 10.
+    """
+    digits = OneOrMore(Char(nums))
+    return digits.add_parse_action(lambda _string, _location, tokens: "".join(tokens))
+
+
+# The grammar for a chemical expression: molecules, each with an optional
+# count and phase, separated by "+". For example, "2H2O(l) + [Cu(NH3)4]^2+".
+# Each parse action turns its tokens into a Tree for _render_to_html and
+# divide_chemical_expression to work from.
+_number = _digits().add_parse_action(_tree("number"))
+_plus_minus = one_of("+ -").set_parse_action(_tree("plus_minus"))
+_ion = (Suppress("^") + Opt(_number) + _plus_minus).set_parse_action(_ion_suffix)
+_number_suffix = _digits().add_parse_action(_tree("number_suffix"))
+_suffix = (_number_suffix + Opt(_ion) | _ion).set_parse_action(_tree("suffix"))
+
+# Try longer symbols first, so that "Co" is cobalt rather than "C" + "o".
+#
+# The names given to this and the two bracketed groups are what a
+# ParseException's message calls them. Without names, a message that says
+# what was expected lists every element symbol.
+_element = Regex("|".join(sorted(elements, key=len, reverse=True))).set_name("element")
+_element.set_parse_action(_tree("element"))
+
+_group = Forward()
+_round = (Suppress("(") + _group + Suppress(")")).set_name("(group)")
+_round.set_parse_action(_bracketed("paren_group_round"))
+_square = (Suppress("[") + _group + Suppress("]")).set_name("[group]")
+_square.set_parse_action(_bracketed("paren_group_square"))
+_group <<= OneOrMore(
+    ((_element | _round | _square) + Opt(_suffix)).set_parse_action(_suffixed)
+).set_parse_action(_tree("group"))
+
+_count = (_number + Opt(Literal("/") + _number)).set_parse_action(_tree("count"))
+_phase = one_of(phases).set_parse_action(_tree("phase"))
+_molecule = (_group + Opt(_phase)).set_parse_action(_tree("molecule"))
+_multimolecule = (Opt(_count) + _molecule).set_parse_action(_tree("multimolecule"))
+_expression = (
+    (_multimolecule + ZeroOrMore(Literal("+") + _multimolecule)).set_parse_action(_tree("S"))
+    + StringEnd()
+)
 
 
 def _render_to_html(tree):
@@ -254,19 +275,19 @@ def render_to_html(eq):
 
 def _get_final_tree(s):
     """
-    Return final tree after merge and clean.
+    Parse a chemical expression (one side of an equation) into a Tree.
 
     Raises pyparsing.ParseException if s is invalid.
     """
-    try:
-        tokenized = tokenizer.parseString(s)
-        parsed = parser.parse(tokenized)
-        merged = _merge_children(next(parsed), {'S', 'group'})
-        final = _clean_parse_tree(merged)
-        return final
-    except StopIteration:
-        # This happens with an empty tree- see this with input e.g. 'H2O(', or 'Xe+').
-        raise ParseException("Shouldn't have empty trees")
+    depth = 0
+    for char in s:
+        if char in "([":
+            depth += 1
+            if depth > MAX_NESTING:
+                raise ParseException(s, msg="Brackets are nested too deeply")
+        elif char in ")]":
+            depth -= 1
+    return _expression.parse_string(s)[0]
 
 
 def _check_equality(tuple1, tuple2):
@@ -304,7 +325,7 @@ def divide_chemical_expression(s1, s2, ignore_state=False):
     - if ignore_state is True, ignores phases when doing the comparison.
 
     Examples:
-    divide_chemical_expression("H2O", "3H2O") -> Fraction(1,3)
+    divide_chemical_expression("H2O", "3H2O") -> Fraction(1 / 3)  # not Fraction(1, 3): see "float-factors" below.
     divide_chemical_expression("3H2O", "H2O") -> 3  # actually Fraction(3, 1), but compares == to 3.
     divide_chemical_expression("2H2O(s) + 2CO2", "H2O(s)+CO2") -> 2
     divide_chemical_expression("H2O(s) + CO2", "3H2O(s)+2CO2") -> False
@@ -334,6 +355,10 @@ def divide_chemical_expression(s1, s2, ignore_state=False):
             count_subtree = [t for t in el.subtrees() if t.label() == 'count']
             group_subtree = [t for t in el.subtrees() if t.label() == 'group']
             phase_subtree = [t for t in el.subtrees() if t.label() == 'phase']
+            # Compatibility quirk "float-factors" (see test_chemcalc_quirks.py):
+            # counts become floats here. So the ratio returned below is a
+            # float's value rather than an exact fraction, and rounding can make
+            # proportional fractional counts look not proportional.
             if count_subtree:
                 if len(count_subtree[0]) > 1:
                     treedic[i + ' factors'].append(
@@ -367,6 +392,8 @@ def divide_chemical_expression(s1, s2, ignore_state=False):
         if treedic['1 phases'] != treedic['2 phases']:
             return False
 
+    # Compatibility quirk "zero-count-raises" (see test_chemcalc_quirks.py):
+    # a count of 0 in s2 makes this raise ZeroDivisionError.
     if any(
         [
             x / y - treedic['1 factors'][0] / treedic['2 factors'][0]
