@@ -3,9 +3,11 @@
 # pylint: disable=too-many-public-methods
 
 import importlib.util
+import math
 import threading
 import unittest
 from fractions import Fraction
+from unittest import mock
 
 from pyparsing import ParseException
 
@@ -442,6 +444,7 @@ class TestThreadSafety(unittest.TestCase):
 class TestCrystallographyMiller(unittest.TestCase):
     """Tests  for crystallography grade function."""
     # pylint: disable=line-too-long
+    # pylint: disable=protected-access
     def test_empty_points(self):
         user_input = '{"lattice": "bcc", "points": []}'
         self.assertFalse(chem.miller.grade(user_input, {'miller': '(2,2,2)', 'lattice': 'bcc'}))
@@ -573,6 +576,91 @@ class TestCrystallographyMiller(unittest.TestCase):
     def test_wrong_lattice(self):
         user_input = '{"lattice": "bcc", "points": [["0.00", "0.00", "0.00"], ["1.00", "0.00", "0.00"], ["1.00", "1.00", "1.00"]]}'
         self.assertFalse(chem.miller.grade(user_input, {'miller': '(3,3,3)', 'lattice': 'fcc'}))
+
+    def test_fused_arithmetic_goes_first(self):
+        # This plane cuts each axis at 1.95, which is as close to 2 as it is
+        # to 19/10. Fused arithmetic comes out just above 1.95, so the indices
+        # are (1,1,1). Plain arithmetic comes out just below, so they're
+        # (10,10,10). miller() gives the fused ones, as chem did on CPUs with
+        # AVX-512 when it used numpy.
+        user_input = '{"lattice": "", "points": [["0.00", "1.00", "0.95"], ["1.00", "0.95", "0.00"], ["0.00", "0.95", "1.00"]]}'
+        self.assertTrue(chem.miller.grade(user_input, {'miller': '(1,1,1)', 'lattice': ''}))
+        with mock.patch.object(chem.miller, '_dot_fused', chem.miller._dot_plain):
+            self.assertTrue(chem.miller.grade(user_input, {'miller': '(10,10,10)', 'lattice': ''}))
+
+    def test_zero_division_is_retried_with_plain_arithmetic(self):
+        # 0.75 * 0.6 - 0.6 * 0.75 shows that this plane goes through the
+        # origin, and only comes to exactly zero in plain arithmetic. Fused
+        # arithmetic leaves a rounding error instead, and that ends in
+        # ZeroDivisionError, as it did on CPUs with AVX-512 when chem used
+        # numpy. miller() then tries again with plain arithmetic.
+        user_input = '{"lattice": "", "points": [["1.00", "0.75", "0.00"], ["0.00", "0.00", "0.00"], ["1.00", "0.00", "0.60"]]}'
+        correct_answer = {'miller': '(3,-4,-5)', 'lattice': ''}
+        self.assertTrue(chem.miller.grade(user_input, correct_answer))
+        with mock.patch.object(chem.miller, '_dot_plain', chem.miller._dot_fused):
+            with self.assertRaises(ZeroDivisionError):
+                chem.miller.grade(user_input, correct_answer)
+
+    def test_other_errors_are_not_retried(self):
+        # Fused arithmetic overflows on these points. Plain arithmetic would
+        # find indices for them, but only ZeroDivisionError gets a second try.
+        user_input = '{"lattice": "", "points": [["1e120", "1e120", "0"], ["0", "0", "0"], ["1e120", "0", "1e120"]]}'
+        correct_answer = {'miller': '(0,0,0)', 'lattice': ''}
+        with self.assertRaises(OverflowError):
+            chem.miller.grade(user_input, correct_answer)
+        with mock.patch.object(chem.miller, '_dot_fused', chem.miller._dot_plain):
+            self.assertTrue(chem.miller.grade(user_input, correct_answer))
+
+    def test_dot_fused_and_dot_plain(self):
+        # The two products are equal and opposite. Plain arithmetic rounds
+        # both the same way, so they cancel. Fused arithmetic rounds only the
+        # first, which leaves that product's rounding error.
+        a, b = (0.1, 0.7, 0.0), (0.7, -0.1, 0.0)
+        self.assertEqual(chem.miller._dot_plain(a, b), 0)
+        self.assertEqual(chem.miller._dot_fused(a, b), -6.661338147750939e-18)
+        # math.sumprod looks like a replacement for either, and matches neither.
+        a, b = (0.1, 0.1, 0.1), (0.1, -0.9, 0.8)
+        self.assertEqual(chem.miller._dot_plain(a, b), 0)
+        self.assertEqual(chem.miller._dot_fused(a, b), 7.216449660063518e-18)
+        self.assertEqual(math.sumprod(a, b), 2.7755575615628915e-18)
+
+    def test_fma(self):
+        inf, nan = math.inf, math.nan
+        for x, y, z, expected in (
+            # The same as math.fma, which needs Python 3.13:
+            (0.1, 0.1, -(0.1 * 0.1), -8.326672684688674e-19),  # the rounding error of 0.1 * 0.1
+            (2.0, 1e308, -1e308, 1e308),  # 2.0 * 1e308 would overflow if it were rounded
+            (5e-324, 0.5, 5e-324, 1e-323),
+            (0.5, 2.0, -1.0, 0.0),
+            (-0.0, 1.0, -0.0, -0.0),
+            (0.0, 1.0, -0.0, 0.0),
+            (inf, 1.0, 1.0, inf),
+            (1e200, 1e200, -inf, -inf),
+            (1.0, 1.0, nan, nan),
+            # math.fma raises an exception for these. numpy didn't.
+            (1e200, 1e200, 0.0, inf),
+            (-1e200, 1e200, 0.0, -inf),
+            (1e154, 1e154, 1.7e308, inf),
+            (inf, 0.0, 1.0, nan),
+            (inf, 1.0, -inf, nan),
+        ):
+            with self.subTest(x=x, y=y, z=z):
+                # repr() tells 0.0 from -0.0, and nan doesn't equal itself.
+                self.assertEqual(repr(chem.miller._fma(x, y, z)), repr(expected))
+
+    def test_points_without_three_coordinates(self):
+        for points in (
+            '[["0.50", "0.00"], ["0.00", "0.50"], ["1.00", "1.00"]]',
+            '[["0.50", "0.00", "0.00", "0.00"], ["0.00", "0.50", "0.00", "0.00"], ["0.00", "0.00", "0.50", "0.00"]]',
+            '[["0.50", "0.00", "0.00"], ["0.00", "0.50"], ["0.00", "0.00", "0.50"]]',
+        ):
+            user_input = '{"lattice": "", "points": ' + points + '}'
+            with self.assertRaises(ValueError):
+                chem.miller.grade(user_input, {'miller': '(2,2,2)', 'lattice': ''})
+
+    def test_miller_takes_any_sequences(self):
+        self.assertEqual(chem.miller.miller([(0.5, 0, 0), (0, 0.5, 0), (0, 0, 0.5)]), '(2,2,2)')
+        self.assertEqual(chem.miller.miller([[0.5, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.5]]), '(2,2,2)')
 
 
 class TestGrade(unittest.TestCase):
